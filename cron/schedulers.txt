@@ -1,0 +1,1 @@
+0 * * * * curl --header https://http://localhost:3003//fetch_files >> /home/ubuntu/logs/app_schedulars.log
