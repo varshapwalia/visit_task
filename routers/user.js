@@ -17,7 +17,7 @@ function getConnection() {
 
 router.get("/users", (req, res) => {
     const connection = getConnection()
-    const queryString = "SELECT * FROM USERDATA"
+    const queryString = "SELECT * FROM DATA"
     connection.query(queryString, (err, rows, fields) => {
       if (err) {
         console.log("Failed to query for users: " + err)
@@ -28,61 +28,84 @@ router.get("/users", (req, res) => {
     })
   })
 
+// FETCH CSV DATA
 router.post('/user_csv', (req, res) => {
     console.log("Trying to create a new user...")
-    const csv = req.body.user_id
+    const data = req.body.file
 
-    const contacPromise = new Promise((resolve,reject) =>{
-    const queryString = "INSERT INTO USERDATA (user_id, user_name, dates, steps, calories) VALUES (?, ?, ?, ?, ?)"
-        getConnection().query(queryString, [user_id, user_name, dates, steps, calories], (err, results, fields) => {
-          if (err) {
-            console.log("Failed to insert new user: " + err)
-            res.sendStatus(500)
-            return
+    for (var index = 0; index < data.length; index++) {
+        const user_id = data[index][0]
+        const user_name = data[index][1]
+        const dates = data[index][2]
+        const steps = data[index][3]
+        const calories = data[index][4]
+
+        //START QUERYING
+        const contacPromise = new Promise((resolve,reject) =>{
+          //CHECK IF USER LREADY EXIST
+          check_exists = getConnection().query("SELECT EXISTS(SELECT user_id FROM USER WHERE user_id=uid)")
+          if check_exists{
+            //IF USER EXIST JUST SIMPLY PUT REST THE DATA IN THE TABLE
+            const queryString = "INSERT INTO DATA (user_id, dates, steps, calories) VALUES (?, ?, ?, ?)"
+            getConnection().query(queryString, [uid, dates, steps, calories], (err, results, fields) => {
+              if (err) {
+                console.log("Failed to insert new USER: " + err)
+                res.sendStatus(500)
+                return
+              }
+            };
+            }
+          else {
+            //IF USER DO NOT EXIST MAKE 1 ENTRY FOR USER AS WELL
+            const queryString = "INSERT INTO USER (user_id, user_name) VALUES (?, ?)"
+            getConnection().query(queryString, [uid, user_name], (err, results, fields) => {
+              if (err) {
+                console.log("Failed to insert new USER: " + err)
+                res.sendStatus(500)
+                return
+              }
+            };
+
+            const queryString = "INSERT INTO DATA (user_id, dates, steps, calories) VALUES (?, ?, ?, ?)"
+            getConnection().query(queryString, [uid, dates, steps, calories], (err, results, fields) => {
+              if (err) {
+                console.log("Failed to insert new DATA: " + err)
+                res.sendStatus(500)
+                return
+              }
+            };
           }
-        };
-      })
+          })
+        }
     res.end()
   })
 
-// router.post('/user_create', (req, res) => {
-//     console.log("Trying to create a new user...")
-//
-//     console.log("First name: " + req.body.full_name)
-//     const user_id = req.body.user_id
-//     const user_name = req.body.user_name
-//     const dates = req.body.dates
-//     const steps = req.body.steps
-//     const calories = req.body.calories
-//
-//     const queryString = "INSERT INTO USERDATA (user_id, user_name, dates, steps, calories) VALUES (?, ?, ?, ?, ?)"
-//     getConnection().query(queryString, [user_id, user_name, dates, steps, calories], (err, results, fields) => {
-//       if (err) {
-//         console.log("Failed to insert new user: " + err)
-//         res.sendStatus(500)
-//         return
-//       }
-//
-//       console.log("Inserted a new user with id: ", results.insertId);
-//       res.end()
-//     })
-//   })
-
-// router.get("/create_table", (req, res) => {
-//   const connection = getConnection()
-//   // if (err) throw err;
-//   console.log("Connected!");
-//   var sql = "CREATE TABLE USERDATA (user_id INT, user_name VARCHAR(255), dates Date, steps INT, calories INT)";
-//   connection.query(sql, function (err, result) {
-//     // if (err) throw err;
-//     console.log("Table created");
-//     if (err) {
-//       console.log("Failed to query for users: " + err)
-//       res.sendStatus(500)
-//       return
-//     }
-//   });
-//   res.end()
-// });
+//INTIALIZE MYSQL TABLES
+router.get("/create_table", (req, res) => {
+  const connection = getConnection()
+  // if (err) throw err;
+  console.log("Connected!");
+    var sql = "CREATE TABLE USER (user_id INT NOT NULL, user_name VARCHAR(255)) NOT NULL, PRIMARY KEY (user_id)";
+    connection.query(sql, function (err, result) {
+      // if (err) throw err;
+      console.log("Table created");
+      if (err) {
+        console.log("Failed to query for USER: " + err)
+        res.sendStatus(500)
+        return
+      }
+    });
+     var sql = "CREATE TABLE DATA (data_id INT auto_increment, user_id INT, dates Date, steps INT, calories INT, PRIMARY KEY (data_id) ,FOREIGN KEY (user_id) REFERENCES USER (user_id))";
+     connection.query(sql, function (err, result) {
+        // if (err) throw err;
+        console.log("Table created");
+        if (err) {
+          console.log("Failed to query for DATA: " + err)
+          res.sendStatus(500)
+          return
+        }
+      });
+  res.end()
+});
 
 module.exports = router
