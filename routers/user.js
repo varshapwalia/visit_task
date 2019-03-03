@@ -24,6 +24,7 @@ router.get("/users", (req, res) => {
         res.sendStatus(500)
         return
       }
+      resp.writeHead(200, { 'content-type': 'application/json' });
       res.json(rows)
     })
   })

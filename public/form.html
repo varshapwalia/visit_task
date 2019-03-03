@@ -7,7 +7,10 @@
   <body>
     <div>
       <div>
-        This is HTML
+        <form action="/user_csv" method="post" enctype="multipart/form-data">
+        <input name="file"  type="file" accept=".csv"/>
+        <input type="submit" name="Submit" value="Submit"/>
+        </form>
       </div>
     </div>
   </body>
